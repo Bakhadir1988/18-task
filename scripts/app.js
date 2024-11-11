@@ -2,6 +2,7 @@
 
 let habits = [];
 const HABITS_KEY = "HABITS_KEY";
+let globalActiveId;
 
 // page
 const page = {
@@ -12,9 +13,9 @@ const page = {
     progressCoverBar: document.querySelector(".progress__cover-bar"),
   },
   content: {
-		dayContainer: document.getElementById("days"),
-		nextDay: document.querySelector(".habbit__day"),
-	}
+    dayContainer: document.getElementById("days"),
+    nextDay: document.querySelector(".habbit__day"),
+  },
 };
 
 // utils
@@ -69,29 +70,62 @@ function renderHead(activeHabit) {
 }
 
 function renderContent(activeHabit) {
-	page.content.dayContainer.innerHTML = "";
-	for(const index in activeHabit.days) {
-		console.log('index', Number(index) + 1)
-		const element = document.createElement("div");
-		element.classList.add("habbit");
-		element.innerHTML = `
+  page.content.dayContainer.innerHTML = "";
+  for (const index in activeHabit.days) {
+    const element = document.createElement("div");
+    element.classList.add("habbit");
+    element.innerHTML = `
 			<div class="habbit__day">День ${Number(index) + 1}</div>
 			<div class="habbit__comment">${activeHabit.days[index].comment}</div>
-			<button class="habbit__delete"><img src="./images/delete.svg" alt="Удалить день ${Number(index) + 1}" /></button>
+			<button class="habbit__delete" onclick="deleteDay(${index})"><img src="./images/delete.svg" alt="Удалить день ${
+        Number(index) + 1
+      }" /></button>
 		`;
 
-		page.content.dayContainer.appendChild(element);
-	}
+    page.content.dayContainer.appendChild(element);
+  }
 
-	page.content.nextDay.innerText = `День ${activeHabit.days.length + 1}`;
+  page.content.nextDay.innerText = `День ${activeHabit.days.length + 1}`;
 }
 
 function render(activeHabitId) {
+  globalActiveId = activeHabitId;
   const activeHabit = habits.find((habit) => habit.id === activeHabitId);
   if (!activeHabit) return;
   renderMenu(activeHabit);
   renderHead(activeHabit);
-	renderContent(activeHabit);
+  renderContent(activeHabit);
+}
+
+// events
+function addDays(event) {
+  event.preventDefault();
+  const form = event.target;
+  const data = new FormData(form);
+  const comment = data.get("comment");
+  form["comment"].classList.remove("error");
+  if (!comment) {
+    form["comment"].classList.add("error");
+  }
+  habits.map((habit) => {
+    if (habit.id === globalActiveId) {
+      return {
+        ...habit,
+        days: habit.days.push({ comment }),
+      };
+    }
+
+    return habit;
+  });
+  form["comment"].value = "";
+  render(globalActiveId);
+  saveData();
+}
+
+function deleteDay(index) {
+  habits.find((habit) => habit.id === globalActiveId).days.splice(index, 1);
+  render(globalActiveId);
+  saveData();
 }
 
 // init
